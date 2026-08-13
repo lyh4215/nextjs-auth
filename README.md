@@ -26,3 +26,19 @@ Codespaces처럼 브라우저 Origin과 프록시 호스트가 다른 개발 환
 - 파라미터를 포함한 `scrypt$N$r$p$salt$hash` 비밀번호 형식
 - `timingSafeEqual`을 이용한 파생 키 검증
 - 보호 페이지와 민감한 Server Action 모두 서버에서 세션 재검증
+- 단일 Node 프로세스의 SSE 연결로 기존 기기에 세션 교체를 즉시 통지
+
+## SSE 운영 조건
+
+이 예제의 실시간 세션 알림은 단일 온프레미스 Node 프로세스의 메모리 이벤트 버스를 사용합니다. `next start` 프로세스를 하나만 실행하세요. 여러 프로세스나 여러 서버로 확장할 때는 메모리 이벤트 버스를 Redis Pub/Sub으로 교체해야 합니다.
+
+Nginx를 앞에 두는 경우 SSE 경로의 응답 버퍼링을 끄고 긴 연결 시간을 허용해야 합니다. 애플리케이션도 `X-Accel-Buffering: no` 헤더를 반환합니다.
+
+```nginx
+location /api/session/events {
+    proxy_pass http://127.0.0.1:3000;
+    proxy_http_version 1.1;
+    proxy_buffering off;
+    proxy_read_timeout 1h;
+}
+```

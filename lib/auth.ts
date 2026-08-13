@@ -4,6 +4,7 @@ import { createHash, randomBytes } from "node:crypto";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
+import { publishSessionReplacement } from "@/lib/session-events";
 
 export const SESSION_COOKIE_NAME = "session_id";
 export const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 30;
@@ -35,6 +36,9 @@ export async function createSession(userId: string): Promise<void> {
     update: { id, expiresAt, createdAt: new Date() },
   });
 
+  // Notify connections that still belong to the session just replaced.
+  publishSessionReplacement(userId, id);
+
   const cookieStore = await cookies();
   cookieStore.set(SESSION_COOKIE_NAME, token, cookieOptions());
 }
@@ -50,7 +54,7 @@ export async function deleteCurrentSession(): Promise<void> {
   cookieStore.delete(SESSION_COOKIE_NAME);
 }
 
-export async function getCurrentUser() {
+export async function getCurrentSession() {
   const cookieStore = await cookies();
   const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
   if (!token) return null;
@@ -61,6 +65,8 @@ export async function getCurrentUser() {
       expiresAt: { gt: new Date() },
     },
     select: {
+      id: true,
+      expiresAt: true,
       user: {
         select: {
           id: true,
@@ -75,7 +81,11 @@ export async function getCurrentUser() {
 
   if (!session) return null;
 
-  return session.user;
+  return session;
+}
+
+export async function getCurrentUser() {
+  return (await getCurrentSession())?.user ?? null;
 }
 
 export async function requireUser() {

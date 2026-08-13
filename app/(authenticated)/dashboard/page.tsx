@@ -1,6 +1,5 @@
 import { logoutAction } from "@/app/actions/auth";
 import { ProfileForm } from "@/app/components/profile-form";
-import { SessionMonitor } from "@/app/components/session-monitor";
 import { requireUser } from "@/lib/auth";
 
 export default async function DashboardPage() {
@@ -8,7 +7,6 @@ export default async function DashboardPage() {
 
   return (
     <main className="dashboard-shell">
-      <SessionMonitor />
       <section className="dashboard-card">
         <div className="dashboard-header">
           <div>

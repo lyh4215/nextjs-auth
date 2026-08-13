@@ -1,12 +1,16 @@
 "use server";
 
 import { Prisma } from "@prisma/client";
+import { randomUUID } from "node:crypto";
 import { redirect } from "next/navigation";
 import { createSession, deleteCurrentSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { hashPassword, verifyPassword } from "@/lib/password";
 
-export type AuthActionState = { error?: string };
+export type AuthActionState = {
+  error?: string;
+  sessionReplacementPromptId?: string;
+};
 
 const MIN_PASSWORD_LENGTH = 12;
 const MAX_PASSWORD_LENGTH = 128;
@@ -46,6 +50,18 @@ export async function loginAction(
     return { error: "이메일 또는 비밀번호가 올바르지 않습니다." };
   }
 
+  const replacementConfirmed = formData.get("replaceSession") === "yes";
+  const activeSession = await db.session.findUnique({
+    where: { userId: user.id },
+    select: { expiresAt: true },
+  });
+
+  if (activeSession && activeSession.expiresAt > new Date() && !replacementConfirmed) {
+    return { sessionReplacementPromptId: randomUUID() };
+  }
+
+  // Credentials were verified again on this request. The upsert invalidates
+  // the other device's session only after the user confirms the warning.
   await createSession(user.id);
   redirect("/dashboard");
 }

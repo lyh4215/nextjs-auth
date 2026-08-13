@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import {
   loginAction,
   registerAction,
@@ -14,18 +14,54 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
   const action = mode === "login" ? loginAction : registerAction;
   const [state, formAction, pending] = useActionState(action, initialState);
   const isLogin = mode === "login";
+  const formRef = useRef<HTMLFormElement>(null);
+  const replaceSessionRef = useRef<HTMLInputElement>(null);
+  const [displayName, setDisplayName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  useEffect(() => {
+    if (!state.sessionReplacementPromptId) return;
+
+    const confirmed = window.confirm(
+      "이미 로그인 중인 계정입니다. 로그인하면 기존 기기에서 로그아웃됩니다. 계속하시겠습니까?",
+    );
+
+    if (confirmed && formRef.current && replaceSessionRef.current) {
+      replaceSessionRef.current.value = "yes";
+      formRef.current.requestSubmit();
+    }
+  }, [state.sessionReplacementPromptId]);
 
   return (
-    <form action={formAction} className="form-stack">
+    <form ref={formRef} action={formAction} className="form-stack">
+      {isLogin && (
+        <input ref={replaceSessionRef} type="hidden" name="replaceSession" defaultValue="" />
+      )}
       {!isLogin && (
         <label>
           이름
-          <input name="displayName" autoComplete="name" required maxLength={50} />
+          <input
+            name="displayName"
+            autoComplete="name"
+            required
+            maxLength={50}
+            value={displayName}
+            onChange={(event) => setDisplayName(event.target.value)}
+          />
         </label>
       )}
       <label>
         이메일
-        <input name="email" type="email" autoComplete="email" required maxLength={254} />
+        <input
+          name="email"
+          type="email"
+          autoComplete="email"
+          required
+          maxLength={254}
+          value={email}
+          onChange={(event) => setEmail(event.target.value)}
+        />
       </label>
       <label>
         비밀번호
@@ -36,6 +72,8 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
           required
           minLength={isLogin ? undefined : 12}
           maxLength={128}
+          value={password}
+          onChange={(event) => setPassword(event.target.value)}
         />
       </label>
       {!isLogin && <p className="hint">12자 이상의 비밀번호를 사용하세요.</p>}

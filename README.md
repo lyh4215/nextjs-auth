@@ -16,6 +16,8 @@ npm run dev
 
 배포 환경에서는 `npx prisma migrate deploy`로 포함된 초기 마이그레이션을 적용하세요. 새 스키마 변경을 만든 경우에는 개발 환경에서 `npm run db:migrate -- --name 변경이름`을 실행합니다.
 
+Codespaces처럼 브라우저 Origin과 프록시 호스트가 다른 개발 환경에서는 `localhost:<PORT>`가 Server Action Origin으로 자동 허용됩니다. 운영 프록시에서 호스트가 다른 경우에만 `.env`의 `SERVER_ACTION_ALLOWED_ORIGINS`에 신뢰할 수 있는 `host[:port]`를 쉼표로 구분해 지정하세요.
+
 ## 주요 보안 속성
 
 - `Session.userId` unique 제약과 upsert로 계정당 활성 세션 하나를 보장

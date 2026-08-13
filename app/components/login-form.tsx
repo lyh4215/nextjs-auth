@@ -3,11 +3,7 @@
 import Link from "next/link";
 import { AlertCircle, LoaderCircle } from "lucide-react";
 import { useActionState, useRef, useState } from "react";
-import {
-  loginAction,
-  registerAction,
-  type AuthActionState,
-} from "@/app/actions/auth";
+import { loginAction, type AuthActionState } from "@/app/actions/auth";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   AlertDialog,
@@ -25,13 +21,10 @@ import { Label } from "@/components/ui/label";
 
 const initialState: AuthActionState = {};
 
-export function AuthForm({ mode }: { mode: "login" | "register" }) {
-  const action = mode === "login" ? loginAction : registerAction;
-  const [state, formAction, pending] = useActionState(action, initialState);
-  const isLogin = mode === "login";
+export function LoginForm() {
+  const [state, formAction, pending] = useActionState(loginAction, initialState);
   const formRef = useRef<HTMLFormElement>(null);
   const replaceSessionRef = useRef<HTMLInputElement>(null);
-  const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [dismissedPromptId, setDismissedPromptId] = useState<string>();
@@ -48,27 +41,12 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
   return (
     <>
       <form ref={formRef} action={formAction} className="grid gap-5">
-        {isLogin && (
-          <input ref={replaceSessionRef} type="hidden" name="replaceSession" defaultValue="" />
-        )}
-        {!isLogin && (
-          <div className="grid gap-2">
-            <Label htmlFor="displayName">이름</Label>
-            <Input
-              id="displayName"
-              name="displayName"
-              autoComplete="name"
-              required
-              maxLength={50}
-              value={displayName}
-              onChange={(event) => setDisplayName(event.target.value)}
-            />
-          </div>
-        )}
+        <input ref={replaceSessionRef} type="hidden" name="replaceSession" defaultValue="" />
+
         <div className="grid gap-2">
-          <Label htmlFor="email">이메일</Label>
+          <Label htmlFor="login-email">이메일</Label>
           <Input
-            id="email"
+            id="login-email"
             name="email"
             type="email"
             autoComplete="email"
@@ -78,37 +56,37 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
             onChange={(event) => setEmail(event.target.value)}
           />
         </div>
+
         <div className="grid gap-2">
-          <Label htmlFor="password">비밀번호</Label>
+          <Label htmlFor="login-password">비밀번호</Label>
           <Input
-            id="password"
+            id="login-password"
             name="password"
             type="password"
-            autoComplete={isLogin ? "current-password" : "new-password"}
+            autoComplete="current-password"
             required
-            minLength={isLogin ? undefined : 12}
             maxLength={128}
             value={password}
             onChange={(event) => setPassword(event.target.value)}
           />
-          {!isLogin && <p className="text-xs text-muted-foreground">12자 이상 입력해 주세요.</p>}
         </div>
+
         {state.error && (
           <Alert variant="destructive">
             <AlertCircle />
             <AlertDescription>{state.error}</AlertDescription>
           </Alert>
         )}
+
         <Button type="submit" size="lg" className="w-full" disabled={pending}>
           {pending && <LoaderCircle className="animate-spin" />}
-          {pending ? "처리 중…" : isLogin ? "로그인" : "계정 만들기"}
+          {pending ? "처리 중…" : "로그인"}
         </Button>
+
         <p className="text-center text-sm text-muted-foreground">
-          {isLogin ? "처음이신가요?" : "이미 계정이 있나요?"}{" "}
+          처음이신가요?{" "}
           <Button asChild variant="link" className="h-auto p-0">
-            <Link href={isLogin ? "/register" : "/login"}>
-              {isLogin ? "회원가입" : "로그인"}
-            </Link>
+            <Link href="/register">회원가입</Link>
           </Button>
         </p>
       </form>

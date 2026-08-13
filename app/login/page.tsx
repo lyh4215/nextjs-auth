@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { AlertCircle } from "lucide-react";
-import { AuthForm } from "@/app/components/auth-form";
+import { LoginForm } from "@/app/components/login-form";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Card,
@@ -38,7 +38,7 @@ export default async function LoginPage({
             </AlertDescription>
           </Alert>
         )}
-        <AuthForm mode="login" />
+        <LoginForm />
         </CardContent>
       </Card>
     </main>

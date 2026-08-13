@@ -67,7 +67,6 @@ export async function loginAction(
 }
 
 export async function registerAction(
-  _previousState: AuthActionState,
   formData: FormData,
 ): Promise<AuthActionState> {
   const { email, password } = getCredentials(formData);

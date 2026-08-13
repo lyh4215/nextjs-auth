@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { AuthForm } from "@/app/components/auth-form";
+import { RegisterForm } from "@/app/components/register-form";
 import {
   Card,
   CardContent,
@@ -21,7 +21,7 @@ export default async function RegisterPage() {
           <CardDescription>한 계정에는 하나의 활성 세션만 유지됩니다.</CardDescription>
         </CardHeader>
         <CardContent className="px-6 pb-2">
-          <AuthForm mode="register" />
+          <RegisterForm />
         </CardContent>
       </Card>
     </main>

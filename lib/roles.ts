@@ -5,10 +5,13 @@ type UserWithRoles = {
   roles: readonly { role: { key: string } }[];
 };
 
-/** Presentation helper. Server operations must independently call requireRole. */
+/** Any listed role grants access; an empty list denies access.
+ * Presentation helper. Server operations must independently call requireRole.
+ */
 export function hasRole(
   user: UserWithRoles | null | undefined,
-  roleKey: string,
+  roleKey: string | readonly string[],
 ): boolean {
-  return user?.roles.some(({ role }) => role.key === roleKey) ?? false;
+  const allowedRoles = typeof roleKey === "string" ? [roleKey] : roleKey;
+  return user?.roles.some(({ role }) => allowedRoles.includes(role.key)) ?? false;
 }

@@ -28,3 +28,18 @@ test("custom roles and removed assignments are reflected", () => {
   user.roles = [];
   assert.equal(hasRole(user, "billing-manager"), false);
 });
+
+test("role arrays allow either role without requiring both", () => {
+  const allowed = ["admin", "editor"] as const;
+  for (const key of allowed) {
+    assert.equal(hasRole({ roles: [{ role: { key } }] }, allowed), true);
+  }
+  assert.equal(hasRole({ roles: [{ role: { key: "user" } }] }, allowed), false);
+  assert.equal(hasRole({ roles: [] }, allowed), false);
+  assert.equal(hasRole(null, allowed), false);
+  assert.equal(hasRole(undefined, allowed), false);
+});
+
+test("an empty allowed-role array denies access even for admins", () => {
+  assert.equal(hasRole({ roles: [{ role: { key: "admin" } }] }, []), false);
+});

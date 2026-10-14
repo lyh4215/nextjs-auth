@@ -98,8 +98,8 @@ export async function requireUser() {
   return user;
 }
 
-/** Guard each protected page, data operation, and Server Action independently. */
-export async function requireRole(roleKey: string) {
+/** Requires any listed role. Guard each protected page, data operation, and Action independently. */
+export async function requireRole(roleKey: string | readonly string[]) {
   const user = await requireUser();
   if (!hasRole(user, roleKey)) redirect("/forbidden");
   return user;

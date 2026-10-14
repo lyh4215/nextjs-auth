@@ -67,6 +67,15 @@ API에서는 `getCurrentUser()`와 `hasRole()`로 검사한 뒤 각각 401/403 �
 검사에 사용할 역할은 서버 코드에서 정하고, 클라이언트 입력으로 정하지 마세요.
 리다이렉트를 가로채지 않도록 guard는 Action의 일반적인 `try/catch` 바깥에서 호출하세요.
 
+역할 배열을 전달하면 OR 조건으로 검사합니다. 하나라도 있으면 허용하며 빈 배열은 거부합니다.
+`hasRole`과 `RoleGate`도 같은 배열 형식을 지원합니다.
+
+```tsx
+await requireRole(["admin", "editor"]);
+hasRole(user, ["admin", "editor"]);
+<RoleGate role={["admin", "editor"]}>편집 메뉴</RoleGate>;
+```
+
 UI 조건부 표시에는 `hasRole(user, "admin")`을 사용합니다.
 
 ```tsx

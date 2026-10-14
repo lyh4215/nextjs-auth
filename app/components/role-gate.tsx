@@ -10,7 +10,7 @@ export async function RoleGate({
   children,
   fallback = null,
 }: {
-  role: string;
+  role: string | readonly string[];
   children: ReactNode;
   fallback?: ReactNode;
 }) {

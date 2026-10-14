@@ -28,6 +28,78 @@ Codespaces처럼 브라우저 Origin과 프록시 호스트가 다른 개발 환
 - 보호 페이지와 민감한 Server Action 모두 서버에서 세션 재검증
 - 단일 Node 프로세스의 SSE 연결로 기존 기기에 세션 교체를 즉시 통지
 
+## 역할 기반 접근 제어
+
+`User`와 `Role`은 `UserRole`로 연결되며 한 사용자가 여러 역할을 가질 수 있습니다.
+`Role.key`는 권한 검사에 사용하는 고정 식별자이고 `name`은 표시 이름입니다.
+역할 마이그레이션은 `user`, `admin`을 생성하고 기존 사용자에게 `user`만 부여합니다.
+신규 가입도 사용자 생성과 같은 트랜잭션에서 `user` 역할을 연결합니다.
+기존 DB에는 먼저 `npx prisma migrate deploy`를 실행하고 `npm run db:generate`로 클라이언트를 갱신하세요.
+
+Server Component에서는 페이지 또는 보호된 데이터 조회 직전에 검사합니다.
+
+```tsx
+import { requireRole } from "@/lib/auth";
+
+export default async function AdminPage() {
+  const user = await requireRole("admin");
+  return <h1>{user.displayName}님의 관리자 화면</h1>;
+}
+```
+
+Server Action에서도 독립적으로 검사합니다. 페이지나 layout의 검사는 Action을 보호하지 않습니다.
+
+```ts
+"use server";
+
+import { requireRole } from "@/lib/auth";
+import { db } from "@/lib/db";
+
+export async function getUserCountAction() {
+  await requireRole("admin");
+  return db.user.count();
+}
+```
+
+`requireRole`은 현재 사용자를 반환합니다. 미로그인은 `/login`, 역할이 없으면
+`/forbidden`으로 리다이렉트합니다. `/forbidden`은 안내 페이지이며 HTTP 403 응답은 아닙니다.
+API에서는 `getCurrentUser()`와 `hasRole()`로 검사한 뒤 각각 401/403 응답을 반환하세요.
+검사에 사용할 역할은 서버 코드에서 정하고, 클라이언트 입력으로 정하지 마세요.
+리다이렉트를 가로채지 않도록 guard는 Action의 일반적인 `try/catch` 바깥에서 호출하세요.
+
+UI 조건부 표시에는 `hasRole(user, "admin")`을 사용합니다.
+
+```tsx
+import { requireUser } from "@/lib/auth";
+import { hasRole } from "@/lib/roles";
+
+export default async function AccountPage() {
+  const user = await requireUser();
+  return <>{hasRole(user, "admin") && <a href="/admin">관리자 메뉴</a>}</>;
+}
+```
+
+반복되는 조건부 표시에는 서버 컴포넌트인 `RoleGate`를 사용할 수 있습니다.
+
+```tsx
+import { RoleGate } from "@/app/components/role-gate";
+
+<RoleGate role="admin" fallback={null}>
+  <span>관리자 전용 안내</span>
+</RoleGate>
+```
+
+`RoleGate`는 표시만 제어합니다. 자식이 사용하는 민감한 데이터 조회와 Action에도
+`requireRole`을 적용하고, 검사 전에 관리자 데이터를 미리 조회하지 마세요.
+`hasRole`은 전달받은 사용자 정보만 검사하므로 Client Component에서 사용한 결과는
+서버 권한 검사를 대신할 수 없습니다.
+
+역할은 세션 조회마다 DB에서 읽어 다음 서버 요청에 부여·회수가 반영됩니다.
+이미 열린 화면의 역할 표시는 새로고침 전까지 유지될 수 있습니다.
+역할 간 자동 상속은 없으며 `admin`도 `user` 역할이 필요하면 명시적으로 함께 부여합니다.
+관리자 역할은 신뢰할 수 있는 운영 경로에서 명시적으로 부여하세요.
+역할 키 변경·삭제와 역할 부여·회수는 권한 변경이므로 해당 관리 기능에도 guard가 필요합니다.
+
 ## SSE 운영 조건
 
 이 예제의 실시간 세션 알림은 단일 온프레미스 Node 프로세스의 메모리 이벤트 버스를 사용합니다. `next start` 프로세스를 하나만 실행하세요. 여러 프로세스나 여러 서버로 확장할 때는 메모리 이벤트 버스를 Redis Pub/Sub으로 교체해야 합니다.

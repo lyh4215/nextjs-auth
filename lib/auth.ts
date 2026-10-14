@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { publishSessionReplacement } from "@/lib/session-events";
+import { hasRole } from "@/lib/roles";
 
 export const SESSION_COOKIE_NAME = "session_id";
 export const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 30;
@@ -74,6 +75,9 @@ export async function getCurrentSession() {
           displayName: true,
           createdAt: true,
           updatedAt: true,
+          roles: {
+            select: { role: { select: { key: true } } },
+          },
         },
       },
     },
@@ -91,5 +95,12 @@ export async function getCurrentUser() {
 export async function requireUser() {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
+  return user;
+}
+
+/** Guard each protected page, data operation, and Server Action independently. */
+export async function requireRole(roleKey: string) {
+  const user = await requireUser();
+  if (!hasRole(user, roleKey)) redirect("/forbidden");
   return user;
 }

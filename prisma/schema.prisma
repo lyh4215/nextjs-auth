@@ -15,6 +15,25 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   session      Session?
+  roles        UserRole[]
+}
+
+model Role {
+  id          String     @id @default(cuid())
+  key         String     @unique
+  name        String
+  description String?
+  users       UserRole[]
+}
+
+model UserRole {
+  userId String
+  roleId String
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role   Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+  @@index([roleId])
 }
 
 model Session {

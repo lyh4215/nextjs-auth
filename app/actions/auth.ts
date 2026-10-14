@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { createSession, deleteCurrentSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { hashPassword, verifyPassword } from "@/lib/password";
+import { DEFAULT_ROLE_KEY } from "@/lib/roles";
 
 export type AuthActionState = {
   error?: string;
@@ -83,7 +84,15 @@ export async function registerAction(
 
   try {
     const user = await db.user.create({
-      data: { email, displayName, passwordHash: await hashPassword(password) },
+      data: {
+        email,
+        displayName,
+        passwordHash: await hashPassword(password),
+        // Nested creation is atomic. Never accept role assignments from the form.
+        roles: {
+          create: { role: { connect: { key: DEFAULT_ROLE_KEY } } },
+        },
+      },
     });
     await createSession(user.id);
   } catch (error) {

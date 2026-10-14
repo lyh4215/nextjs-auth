@@ -11,6 +11,8 @@ import {
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { requireUser } from "@/lib/auth";
+import Link from "next/link";
+import { hasRole } from "@/lib/roles";
 
 export default async function DashboardPage() {
   const user = await requireUser();
@@ -34,6 +36,11 @@ export default async function DashboardPage() {
         </CardHeader>
 
         <CardContent className="grid gap-7 px-6 pb-2 sm:px-8">
+          {hasRole(user, "admin") && (
+            <Button asChild variant="outline" className="w-fit">
+              <Link href="/admin">역할 및 사용자 관리</Link>
+            </Button>
+          )}
           <dl className="grid gap-3 sm:grid-cols-2">
             <div className="rounded-lg border bg-muted/40 p-4">
               <dt className="mb-1 text-xs font-medium text-muted-foreground">이메일</dt>
